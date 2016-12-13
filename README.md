@@ -1,5 +1,9 @@
+
+On Choosing a database
+======================
+
 On the hard-coded implementation
-================================
+--------------------------------
 
 Since all the prefixes are stored in a python hash with 
 [O(1)](https://wiki.python.org/moin/DictionaryKeys) access time,
@@ -7,10 +11,9 @@ the time complexity is linear with the length of the phone number,
 a finite number, thus the overall time complexity is *O(1)*.
 
 On using MySQL
-==============
+--------------
 
-How would it be implemented ?
------------------------------
+### How would it be implemented ?
 
 Could use a `rules` table such as:
 
@@ -30,8 +33,11 @@ Could use a `rules` table such as:
     | trialOnly | tinyint(1)                | NO   |     | NULL    |       |
     +-----------+---------------------------+------+-----+---------+-------+
 
-The prefix can be a primary key, because it doesn't make sense to both restrict 
+The prefix can be part of the primary key, because it doesn't make sense to both restrict 
 and allow the same prefix.
+
+Note that the sample queries are for non trial users. 
+The queries for trial users would not include such a condition. 
 
 The query to get all rules would look like:
     
@@ -94,8 +100,7 @@ This way any organisation specific rule that restricts access is filtered out.
 Of course we could also take measures to make sure these don't get into the database in the first place, 
 but since upsetting the customer could mean a lost deal, it's better to have a last line of defense anyway.
  
-How would this perform
-----------------------
+### How would this perform
 
 With around 600 rows, it does use the index:
 
@@ -114,8 +119,7 @@ Integer operations are faster, and more storage efficient - which can help when 
 has to fit in memory, but would not be of 
 significance at the size of this data set. 
 
-Conclusions
------------
+### Conclusions
 
 - we exchanged an O(1) hash-table based implementation to 
   around O(log(n)) - the B-TREE index time complexity of the database
@@ -127,8 +131,18 @@ Conclusions
   if the requirements change even a bit it is likely that the mental
   process has to be repeated.
 
+On Using PostgreSQL
+-------------------
+
+Unlike MySQL, there is [a hash index](https://www.postgresql.org/docs/9.1/static/indexes-types.html), 
+but it suffers from reliability issues, and while the time complexity is not documented
+(older versions of the manual)[https://www.postgresql.org/docs/8.3/static/indexes-types.html]
+state that performance is not better than B-TREE.
+
+It is unlikely that PostgreSQL can be any better than MySQL in this case.
+
 On using MongoDB
-================
+----------------
 
 The concept is similar to MySQL, we would store the rules in a collection:
 
@@ -200,6 +214,42 @@ Breaking up in multiple collections and using the prefix as an index might do it
 that would increase complexity even further, and we would still need to implement a rule
 engine in the application, so it would seem an inferior solution to the MySQL one.
 
+On Using Redis
+--------------
+
+The data can be modeled in redis:
+
+    set rules:trial:12 restrict
+    set rules:123 restrict
+    set rules:954e022d-1508-4c51-84f5-85fc4d0dc1f2 enable
+    set rules:954e022d-1508-4c51-84f5-85fc4d0dc1f2:12 allow
+
+Note: since the number of rules is expected to be moderate, readable values are preferred 
+that better reflect intent rather than some more compact variant. 
+
+- The rule engine would need to be implemented by the app, but each rule lookup would
+  be of O(1) complexity. 
+    - Redis makes the time complexity much more straight forward than other databases.
+- a LUA script that rans on Redis can save on latency and bandwidth
+    - granted at the expense of making use of a new programming language in the mix
+- the data model is compact, straight forward, and reassembles the python implementation,
+  making it especially easy to understand for anyone who understood the previous implementation
+- the model accounts for the fact that all rules that apply to non trial users need to apply to
+  trial users as well. The RDBS and Mongo solutions 
+
+The rule engine will consist of:
+
+- checking to see if organisation specific prefixes are enabled 
+- checking organisation specific prefixes from most specific to least specific 
+- if no organisation specific rule is found or the org specific rules are not enabled,
+  do the same for non specific rules
+- if no rule is found, the call is allowed 
+- as soon as a rule is found, we can decide based on that one rule 
+  ( because we are looking at most specific )
+
+As redis offers clear time complexity, relatively straight forward implementation, and is also
+likely to be the fastest since it operates in memory, it's the best fit for a solution.
+
 References 
 ===========
 
@@ -207,14 +257,4 @@ References
   states that the maximum length of a phone number is 15
     - [PBX](https://en.wikipedia.org/wiki/Business_telephone_system#Private_branch_exchange) 
       extensions might be additional, but I don't think we need to support those. 
-
-On Using PostgreSQL
-===================
-
-Unlike MySQL, there is [a hash index](https://www.postgresql.org/docs/9.1/static/indexes-types.html), 
-but it suffers from reliability issues, and while the time complexity is not documented
-(older versions of the manual)[https://www.postgresql.org/docs/8.3/static/indexes-types.html]
-state that performance is not better than B-TREE.
-
-It is unlikely that PostgreSQL can be any better than MySQL in this case.
 
