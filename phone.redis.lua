@@ -120,6 +120,7 @@ if org_specific == true then
 end
     
 for i=string.len(phone_no), 1, -1 do 
+    local prefix = string.sub(phone_no, 1, i)
     local prefix_rule = get_rule(generic_rules, prefix)
     if prefix_rule ~= nil then return prefix_rule end
     
