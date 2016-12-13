@@ -219,10 +219,10 @@ On Using Redis
 
 The data can be modeled in redis:
 
-    set rules:trial:12 restrict
-    set rules:123 restrict
-    set rules:954e022d-1508-4c51-84f5-85fc4d0dc1f2 enable
-    set rules:954e022d-1508-4c51-84f5-85fc4d0dc1f2:12 allow
+    hset rules:trial 12 restrict
+    hset rules 123 restrict
+    hset rules:org 954e022d-1508-4c51-84f5-85fc4d0dc1f2 enable
+    hset rules:org 954e022d-1508-4c51-84f5-85fc4d0dc1f2:12 allow
 
 Note: since the number of rules is expected to be moderate, readable values are preferred 
 that better reflect intent rather than some more compact variant. 
