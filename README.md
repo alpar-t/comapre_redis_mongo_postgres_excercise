@@ -93,7 +93,7 @@ would be better to avoid it:
 This way any organisation specific rule that restricts access is filtered out. 
 Of course we could also take measures to make sure these don't get into the database in the first place, 
 but since upsetting the customer could mean a lost deal, it's better to have a last line of defense anyway.
-
+ 
 How would this perform
 ----------------------
 
@@ -126,6 +126,79 @@ Conclusions
 - it took significant time and effort to come up with this end query, 
   if the requirements change even a bit it is likely that the mental
   process has to be repeated.
+
+On using MongoDB
+================
+
+The concept is similar to MySQL, we would store the rules in a collection:
+
+	db.rules.createIndex(
+		{ prefix:1, orgId:1 }, 
+		{ unique: true }
+	)
+	db.rules.insert(
+	   { "prefix" : "123", "type" : "allow", "isTrial" : false, orgId: "954e022d-1508-4c51-84f5-85fc4d0dc1f2" }
+	)
+	db.rules.insert(
+	   { "prefix" : "12", "type" : "allow", "isTrial" : false, orgId: "954e022d-1508-4c51-84f5-85fc4d0dc1f2" }
+	)
+	db.rules.insert(
+	   { "prefix" : "12", "type" : "restrict", "isTrial" : false }
+	)
+	db.rules.insert(
+	   { "prefix" : "1", "type" : "allow", "isTrial" : false }
+	)
+
+We can the search for the rules in an equivalent way:
+
+	db.rules.find( 
+		{ 
+			$or: [ { prefix: "1" }, { prefix: "12" }, { prefix: "123" } ],
+			isTrial: false,
+			$or: [
+				{ orgId: '954e022d-1508-4c51-84f5-85fc4d0dc1f2', type: 'allow' },
+				{ orgId: { $exists: false } }
+			]
+		}
+	).sort(
+		{
+			orgId: -1, prefix: -1 
+		}
+	).limit(1)
+
+It seems that mongoDB insists on a `colscan` even with more than 2600 documents:
+
+		"winningPlan" : {
+			"stage" : "SORT",
+			"sortPattern" : {
+				"orgId" : -1,
+				"prefix" : -1
+			},
+			"limitAmount" : 1,
+			"inputStage" : {
+				"stage" : "SORT_KEY_GENERATOR",
+				"inputStage" : {
+					"stage" : "COLLSCAN",
+
+That's also true with a dedicated index on `prefix`, so the time complexity is O(n).
+
+Even if we were to use the database just as a store, and implement a rule processing 
+engine in the application, we would get an `IXSCAN` of O(log n) at best:
+
+	db.rules.find( { $or: [ { prefix: "1" }, { prefix: "12" }, { prefix: "123" } ] } ).expain()
+
+	"winningPlan" : {
+	"stage" : "SUBPLAN",
+	"inputStage" : {
+		"stage" : "FETCH",
+		"inputStage" : {
+			"stage" : "IXSCAN", 
+
+Even if we are to take a latency penalty to get the prefixes one-by-one, the index 
+scan can not be avoided with this collection. 
+Breaking up in multiple collections and using the prefix as an index might do it, but
+that would increase complexity even further, and we would still need to implement a rule
+engine in the application, so it would seem an inferior solution to the MySQL one.
 
 References 
 ===========
