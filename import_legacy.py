@@ -42,7 +42,7 @@ def main():
         len(phone_legacy_data.RESTRICTED_OUTBOUND_PAYING_PREFIXES.keys())
     ))
     for prefix in phone_legacy_data.RESTRICTED_OUTBOUND_TRIAL_PREFIXES.keys():
-        rule_ops.push_generic_rule(prefix, rule_ops.R_RESTRICT)
+        rule_ops.push_trial_rule(prefix, rule_ops.R_RESTRICT)
     print("Imported {} trial rules".format(
         len(phone_legacy_data.RESTRICTED_OUTBOUND_TRIAL_PREFIXES.keys())
     ))
