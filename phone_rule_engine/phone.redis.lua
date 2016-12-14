@@ -34,10 +34,8 @@ local get_rule = function(key, prefix)
     --    'alow' or 'restrict' if there is a specific rule at key and prefix or nil otherwhise
     --]]--
     local prefix_rule = redis.call('HGET', key, prefix)
-    redis.log(redis.LOG_NOTICE, 'inspecting', key, prefix)
     if prefix_rule  then
-        -- TODO make DEBUG
-        redis.log(redis.LOG_NOTICE, 
+        redis.log(redis.LOG_DEBUG, 
             'Found rule for key:', key, 'prefix:', prefix, ' policy is', string.upper(prefix_rule)
         )
         if rule_allows(prefix_rule) or rule_restricts(prefix_rule) then
@@ -56,13 +54,13 @@ end
 local with_prefixes = function(phone_no, fn)
     --[[--
     -- Generate all prefixes for phone number starting from the phone number itself and ending 
-    -- with the first first digit.
+    -- with the first first digit and call the function until a result is returned.
     --
     -- @Parameter: phone_no
     --  The phone number to generate the prefixes from
     -- @Parameter: fn
     --  The function to call with each prefix as argument
-    -- @Retruns: The first non nil value returned by fn 
+    -- @Returns: The first non nil value returned by fn 
     --]]--
     for i=string.len(phone_no), 1, -1 do 
         local prefix = string.sub(phone_no, 1, i)
@@ -116,14 +114,12 @@ end
 -- to skip going trough all prefixes for org specific most of the time
 local org_specific=false
 if org_id then
-    if org_id then
-        if redis.call('HGET', org_rules, org_id) == 'enable' then
-            redis.log(redis.LOG_NOTICE, 
-                'Org specific rules are enabled for', org_id
-            )
-            org_specific=true
-        end  
-    end
+    if redis.call('HGET', org_rules, org_id) == 'enable' then
+        redis.log(redis.LOG_NOTICE, 
+            'Org specific rules are enabled for', org_id
+        )
+        org_specific=true
+    end  
 end
 
 -- check all org specific first, 
@@ -152,13 +148,6 @@ if isTrial == true then
 end
 if trial_decision ~= nil then return trial_decision end
 
-
-generic_decision = with_prefixes(phone_no, function(prefix) 
+return with_prefixes(phone_no, function(prefix) 
     return  get_rule(generic_rules, prefix)
 end)
-if generic_decision ~= nil then 
-    return generic_decision 
-else
-    -- allow the caller to implement default behavior if no rules
-    return nil
-end
