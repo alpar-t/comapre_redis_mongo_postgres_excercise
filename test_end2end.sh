@@ -20,12 +20,14 @@ function finish {
 }
 trap finish EXIT
 
+STATUS=0
 check() {
     local ret=`curl -s -X POST $1`
-    if ! echo $ret | grep "$2" ; then
+    if ! echo $ret | grep -q "$2" ; then
         echo -e "\e[31mExpected '$2' but got: $ret\e[37m"
+        STATUS=1
     else
-        echo -e  "\e[92mPASS: $ret \e[37m"
+        echo -e  "\e[92m$ret \e[37m"
     fi
 }
 
@@ -43,4 +45,5 @@ check "$URL_BASE/211744931029?is_trial=True&org_id=foo" "not allowed$"
 check "$URL_BASE/1242744931029?is_trial=False&org_id=foo" "^Calling"
 check "$URL_BASE/1242744931029?is_trial=True&org_id=foo" "not allowed$"
 
+exit $STATUS
 
