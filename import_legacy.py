@@ -4,15 +4,14 @@
 """
  Load the legacy data in redis
 
- Possible optimizations:
-  - load all generic prefixes in trial rules as well
-     - this will lead to fewer lookups for trial custommers
-  - load specific allowing rules for any prefix that is not restricted
-     - this would make it possible to invlaidate a None result form redis
-     - would help if for some reason the script or the data in redis are
-       corrupted / missing and no rule is found, we could still
-       preventively block calls ( even trough we might be over blocking )
-       to prevent excessive costs
+ Possible improovement: load specific allowing rules for any prefix that is
+ not restricted.
+
+ This would make it possible to invalidate a None result form redis
+ would help if for some reason the script or the data in redis are
+ corrupted / missing and no rule is found, we could still
+ preventively block calls ( even trough we might be over blocking )
+ to prevent excessive costs.
 """
 import redis
 import argparse
@@ -38,6 +37,11 @@ def main():
     )
     for prefix in phone_legacy_data.RESTRICTED_OUTBOUND_PAYING_PREFIXES.keys():
         rule_ops.push_generic_rule(prefix, rule_ops.R_RESTRICT)
+        # add the rule as a prefix rule as well to speed up queries for trial
+        # users.
+        # this will avoid some redis lookups at the expense fo using up more
+        # memory
+        rule_ops.push_trial_rule(prefix, rule_ops.R_RESTRICT)
     print("Imported {} general rules".format(
         len(phone_legacy_data.RESTRICTED_OUTBOUND_PAYING_PREFIXES.keys())
     ))
