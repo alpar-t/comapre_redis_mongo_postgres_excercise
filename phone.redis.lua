@@ -53,6 +53,26 @@ local get_rule = function(key, prefix)
     return nil
 end
 
+local with_prefixes = function(phone_no, fn)
+    --[[--
+    -- Generate all prefixes for phone number starting from the phone number itself and ending 
+    -- with the first first digit.
+    --
+    -- @Parameter: phone_no
+    --  The phone number to generate the prefixes from
+    -- @Parameter: fn
+    --  The function to call with each prefix as argument
+    -- @Retruns: The first non nil value returned by fn 
+    --]]--
+    for i=string.len(phone_no), 1, -1 do 
+        local prefix = string.sub(phone_no, 1, i)
+        local ret = fn(prefix)
+        if ret ~= nil then 
+            return ret
+        end
+    end
+end
+
 local check_and_warn_org_restrictions = function(rule, org_id)
     --[[--
     -- Check if the rule belonging to an organization is restrictive and issue a warning 
@@ -108,27 +128,37 @@ end
 
 -- check all org specific first, 
 -- organisation might alow whole "12" prefix, but generic rules restrict "123"
+local org_decision = nil
+local trial_decision = nil
+local generic_decision = nil
+
 if org_specific == true then 
-    -- generate all prefixes starting from most specific 
-    -- (the phone number itself) to least specific ( the first digit)
-    for i=string.len(phone_no), 1, -1 do 
-       local prefix = string.sub(phone_no, 1, i)
+    org_decision = with_prefixes(phone_no, function(prefix)
        local prefix_rule = get_rule(org_rules, org_id .. ':' .. prefix)
        check_and_warn_org_restrictions(prefix_rule, org_id)
-       if prefix_rule ~= nil then return prefix_rule end
-    end
+       return prefix_rule
+    end)
 end
-    
-for i=string.len(phone_no), 1, -1 do 
-    local prefix = string.sub(phone_no, 1, i)
-    local prefix_rule = get_rule(generic_rules, prefix)
-    if prefix_rule ~= nil then return prefix_rule end
-    
-    if isTrial == true then
-       local prefix_rule = get_rule(trial_rules, prefix)
-       check_and_warn_trial_restrictions(prefix_rule, prefix)
-       if prefix_rule ~= nil then return prefix_rule end
-   end
+if org_decision ~= nil then return org_decision end
+
+-- check all trial specific first, these might be more restrictive with generic 
+-- prefixes
+if isTrial == true then
+    trial_decision = with_prefixes(phone_no, function(prefix)
+           local prefix_rule = get_rule(trial_rules, prefix)
+           check_and_warn_trial_restrictions(prefix_rule, prefix)
+           return prefix_rule
+     end)
 end
--- allow the caller to implement default behavior if no rules
-return nil
+if trial_decision ~= nil then return trial_decision end
+
+
+generic_decision = with_prefixes(phone_no, function(prefix) 
+    return  get_rule(generic_rules, prefix)
+end)
+if generic_decision ~= nil then 
+    return generic_decision 
+else
+    -- allow the caller to implement default behavior if no rules
+    return nil
+end
