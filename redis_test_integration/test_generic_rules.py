@@ -11,7 +11,7 @@
 """
 import redis_test
 
-LUA_SCRIPT = "../phone.redis.lua"
+LUA_SCRIPT = "../phone_rule_engine/phone.redis.lua"
 
 
 class GenericTestCase(redis_test.LuaTestCase):
