@@ -7,7 +7,9 @@ set -e
 
 cd "$(dirname "$(realpath "$0")")";
 
-source ../names.sh
+REDIS_TEST_CONTAINER_NAME='rules-redis-test'
+REDIS_TEST_DATA_VOLUME_NAME="${REDIS_TEST_CONTAINER_NAME=}-data"
+REDIS_VERSION="3.0.7"
 
 if ! [ -d venv ] ; then 
     echo "Creating virtual environment"
