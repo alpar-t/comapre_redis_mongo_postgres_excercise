@@ -30,31 +30,28 @@ class LuaTestCase(unittest.TestCase):
             "rules:trial": {}
         }
         self.uuid = "{}:".format(uuid4())
-
-    def given(self):
-        return self.defaultGiven
-
-    def expect(self):
-        return "return 'foobar'", {}
+        self.test_org_id = "some-test-org-id"
 
     @lru_cache()
     def load_script(self, path):
         with open(path, 'r') as script:
             return script.read()
 
-    def test_run(self):
+    def given(self, data):
         test_data = {}
         test_data.update(self.defaultGiven)
-        test_data.update(self.given())
+        test_data.update(data)
         for rule in ("rules", "rules:trial"):
             for key, value in test_data[rule].items():
                 self.redis.hset(self.uuid + rule, key, value)
-        for key, value in test_data["rules:org"]:
-            org_id, _ = key.split(":", 2)
-            self.redis.hset(self.uuid + "rules:org", org_id, "enable")
-            self.redis.hset(self.uuid + "rules:org", key, value)
+        for key, value in test_data["rules:org"].items():
+            self.redis.hset(self.uuid + "rules:org", self.test_org_id, "enable")
+            self.redis.hset(
+                self.uuid + "rules:org", "{}:{}".format(self.test_org_id, key),
+                value
+            )
 
-        script, expected = self.expect()
+    def expect(self, script, expected):
         luaScript = self.redis.register_script(script)
         for each in expected:
             result = each[-1]
