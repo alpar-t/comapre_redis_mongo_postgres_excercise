@@ -12,4 +12,5 @@ assure() {
 assure docker 
 assure python3
 assure virtualenv
+assure curl
 

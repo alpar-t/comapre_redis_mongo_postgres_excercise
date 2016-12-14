@@ -18,6 +18,8 @@ rules_op = RuleOperations(FlaskRedis(app))
 
 @app.before_request
 def check_if_can_call():
+    if not request.view_args:
+        return
     phone_number = request.view_args.get("phone_number")
     if not phone_number:
         return
@@ -45,7 +47,7 @@ def check_if_can_call():
 
 @app.route("/phone_call/<phone_number>", methods=("POST", ))
 def hello(phone_number):
-    is_trial = request.args.get('is_trial')
+    is_trial = request.args.get('is_trial', "false").lower() == "true"
     org_id = request.args.get('org_id')
     return "Calling {} (is_trial: {}, org_id: {}) ...\n".format(
         phone_number, is_trial, org_id
