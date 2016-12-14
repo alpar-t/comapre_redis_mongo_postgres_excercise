@@ -16,6 +16,8 @@ class RuleOperations(object):
         self.key_prefix = key_prefix
         if self.key_prefix:
             self.key_prefix += ":"
+        self.R_RESTRICT = "restrict"
+        self.R_ALLOW = "allow"
 
     def push_generic_rule(self, prefix, rule):
         """ Sets a generic rule for the specific prefix """
@@ -78,11 +80,10 @@ class RuleOperations(object):
         else:
             return None
 
-    @staticmethod
-    def _rule(rule):
+    def _rule(self, rule):
         """ Validate and normalize the rule """
         rule = rule.lower()
-        if rule not in ("allow", "restrict"):
+        if rule not in (self.R_RESTRICT, self.R_ALLOW):
             raise ValueError("Rule has to be one of: allow or restrict, " +
                              "but it was: {}".format(rule))
         return rule

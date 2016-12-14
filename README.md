@@ -5,6 +5,19 @@ Make sure all requirements are available:
 
     ./check_env.sh
 
+Running all tests:
+    
+    ./test_all.sh
+
+Importing existing tests ( requires python redis module )
+
+    python3 import_legacy.py --host=<hostname> --port=<port>
+
+To test the import script on local redis run the following:
+    
+    ./test_all.sh
+    phone_rule_engine/venv/bin/python3 import_legacy.py --port=`docker port rules-redis-test 6379 | cut -d: -f2`
+
 
 On Choosing a database
 ======================
