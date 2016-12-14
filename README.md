@@ -1,26 +1,17 @@
-Building and developing
-=======================
+Developing
+==========
 
-Make sure all requirements are available:
+To see it in action just run ( redis server not required ):
 
-    ./check_env.sh
+    ./test_end2end.sh
 
-Running all tests:
-    
-    ./test_all.sh
+This will check for required tools and run unit, integration and end-to-end 
+tests setting up redis and any other environments.
+The testing scripts and tests are simple and will help you guide you as to what
+is where and how it works.
 
-Importing existing tests ( requires python redis module )
-
-    python3 import_legacy.py --host=<hostname> --port=<port>
-
-To test the import script on local redis run the following:
-    
-    ./test_all.sh
-    phone_rule_engine/venv/bin/python3 import_legacy.py --port=`docker port rules-redis-test 6379 | cut -d: -f2`
-
-
-On Choosing a database
-======================
+How The Database was Chosen
+===========================
 
 On the hard-coded implementation
 --------------------------------
@@ -241,23 +232,13 @@ that better reflect intent rather than some more compact variant.
 
 - The rule engine would need to be implemented by the app, but each rule lookup would
   be of O(1) complexity. 
-    - Redis makes the time complexity much more straight forward than other databases.
-- a LUA script that rans on Redis can save on latency and bandwidth
+    - Redis documents the time complexity in a straight forward way.
+- a LUA script that runs on Redis can save on latency and bandwidth
     - granted at the expense of making use of a new programming language in the mix
 - the data model is compact, straight forward, and reassembles the python implementation,
   making it especially easy to understand for anyone who understood the previous implementation
-- the model accounts for the fact that all rules that apply to non trial users need to apply to
-  trial users as well. The RDBS and Mongo solutions 
-
-The rule engine will consist of:
-
-- checking to see if organisation specific prefixes are enabled 
-- checking organisation specific prefixes from most specific to least specific 
-- if no organisation specific rule is found or the org specific rules are not enabled,
-  do the same for non specific rules
-- if no rule is found, the call is allowed 
-- as soon as a rule is found, we can decide based on that one rule 
-  ( because we are looking at most specific )
+- We need to store the special `enable` value for organisation IDs so that we can short-circuit 
+  the organisational lookups most of the time. 
 
 As redis offers clear time complexity, relatively straight forward implementation, and is also
 likely to be the fastest since it operates in memory, it's the best fit for a solution.
