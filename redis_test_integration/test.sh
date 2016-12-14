@@ -31,8 +31,9 @@ if [ "$CONTAINER_STATUS" == "true" ] ; then
     docker stop $REDIS_TEST_CONTAINER_NAME > /dev/null
     docker wait $REDIS_TEST_CONTAINER_NAME > /dev/null
 fi
-docker run --rm --volumes-from $REDIS_TEST_CONTAINER_NAME redis:$REDIS_VERSION rm -vRf '/data/*' > /dev/null
-docker start $REDIS_TEST_CONTAINER_NAME
+
+docker run --rm --volumes-from $REDIS_TEST_CONTAINER_NAME redis:$REDIS_VERSION rm -rvf '/data/dump.rdb'
+docker start $REDIS_TEST_CONTAINER_NAME > /dev/null
 
 echo
 export REDIS_PORT=`docker port $REDIS_TEST_CONTAINER_NAME 6379 | cut -d: -f2`
