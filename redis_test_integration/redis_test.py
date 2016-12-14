@@ -9,8 +9,7 @@ import os
 from uuid import uuid4
 from functools import lru_cache
 
-
-REDIS_DB = 0
+from phone_rule_engine  import RuleOperations
 
 
 class LuaTestCase(unittest.TestCase):
@@ -23,52 +22,52 @@ class LuaTestCase(unittest.TestCase):
     """
 
     def setUp(self):
-        self.redis = redis.StrictRedis(host='localhost', port=os.environ.get("REDIS_PORT", "6379"), db=0)
+        self.redis = redis.StrictRedis(
+            host='localhost', port=os.environ.get("REDIS_PORT", "6379"), db=0
+        )
+        self.rule_op = RuleOperations(self.redis, str(uuid4()))
         self.defaultGiven = {
             "rules": {},
             "rules:org": {},
             "rules:trial": {}
         }
-        self.uuid = "{}:".format(uuid4())
         self.test_org_id = "some-test-org-id"
 
     @lru_cache()
     def load_script(self, path):
+        """ Loads the path specified in argumenta and memoizes """
         with open(path, 'r') as script:
             return script.read()
 
     def given(self, data):
+        """ Loads data into redis """
         test_data = {}
         test_data.update(self.defaultGiven)
         test_data.update(data)
-        for rule in ("rules", "rules:trial"):
-            for key, value in test_data[rule].items():
-                self.redis.hset(self.uuid + rule, key, value)
+        for key, value in test_data["rules"].items():
+            self.rule_op.push_generic_rule(key, value)
+        for key, value in test_data["rules:trial"].items():
+            self.rule_op.push_trial_rule(key, value)
         for key, value in test_data["rules:org"].items():
-            self.redis.hset(self.uuid + "rules:org", self.test_org_id, "enable")
-            self.redis.hset(
-                self.uuid + "rules:org", "{}:{}".format(self.test_org_id, key),
-                value
+            self.rule_op.push_org_rule(
+                key, value, self.test_org_id
             )
 
-    def expect(self, script, expected):
-        luaScript = self.redis.register_script(script)
+    def expect(self, expected):
+        """ Check the expected output fo running the script """
         for each in expected:
             result = each[-1]
             args = [str(x) for x in each[:-1]]
-            redis_result = luaScript(
-                keys=(
-                    self.uuid + 'rules',
-                    self.uuid + 'rules:trial',
-                    self.uuid + 'rules:org'
-                ),
-                args=args
-            )
-            if redis_result:
-                redis_result = redis_result.decode('ascii')
+            redis_result = self.rule_op.query_rule(*args)
+            if redis_result == True:
+                redis_result = "allow"
+            if redis_result == False:
+                redis_result = "restrict"
             self.assertEqual(
-                result, redis_result,
-                "The expected output for {} was {} but redis returned {}".format(
+                result,
+                redis_result,
+                ("The expected output for {} was {} " +
+                "but redis returned {}").format(
                     args, result, redis_result
                 )
             )

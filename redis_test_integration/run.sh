@@ -36,5 +36,6 @@ docker start $REDIS_TEST_CONTAINER_NAME
 
 echo
 export REDIS_PORT=`docker port $REDIS_TEST_CONTAINER_NAME 6379 | cut -d: -f2`
+export PYTHONPATH=`realpath $PWD/../`:$PYTHONPATH
 exec venv/bin/python -m unittest
 

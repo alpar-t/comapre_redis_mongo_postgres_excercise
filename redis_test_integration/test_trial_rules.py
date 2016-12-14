@@ -11,8 +11,6 @@
 """
 import redis_test
 
-LUA_SCRIPT = "../phone_rule_engine/phone.redis.lua"
-
 
 class OrganisationSpecificTestCase(redis_test.LuaTestCase):
     """ Test organisation sepcific rules """
@@ -118,6 +116,5 @@ class OrganisationSpecificTestCase(redis_test.LuaTestCase):
 
     def expect(self, isTrial, expected_result):
         return super(OrganisationSpecificTestCase, self).expect(
-            self.load_script(LUA_SCRIPT),
             [(x[0], isTrial, self.test_org_id, x[1]) for x in expected_result]
         )

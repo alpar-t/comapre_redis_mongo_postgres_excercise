@@ -11,8 +11,6 @@
 """
 import redis_test
 
-LUA_SCRIPT = "../phone_rule_engine/phone.redis.lua"
-
 
 class GenericTestCase(redis_test.LuaTestCase):
     """ Test decisions based on generic rules  """
@@ -88,7 +86,6 @@ class GenericTestCase(redis_test.LuaTestCase):
 
     def expect(self, expected_result):
         return super(GenericTestCase, self).expect(
-            self.load_script(LUA_SCRIPT),
             [(x[0], False, "any-org-id", x[1]) for x in expected_result]
         )
 
