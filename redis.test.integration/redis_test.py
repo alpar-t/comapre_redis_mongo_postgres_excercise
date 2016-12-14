@@ -5,6 +5,7 @@
 
 import unittest
 import redis
+import os
 from uuid import uuid4
 from functools import lru_cache
 
@@ -22,7 +23,7 @@ class LuaTestCase(unittest.TestCase):
     """
 
     def setUp(self):
-        self.redis = redis.StrictRedis(host='localhost', port=32768, db=0)
+        self.redis = redis.StrictRedis(host='localhost', port=os.environ.get("REDIS_PORT", "6379"), db=0)
         self.defaultGiven = {
             "rules": {},
             "rules:org": {},
