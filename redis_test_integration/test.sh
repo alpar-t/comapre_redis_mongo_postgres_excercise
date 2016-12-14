@@ -7,7 +7,8 @@ set -e
 
 cd "$(dirname "$(realpath "$0")")";
 
-REDIS_TEST_CONTAINER_NAME='rules-redis-test'
+source ../common.sh
+
 REDIS_TEST_DATA_VOLUME_NAME="${REDIS_TEST_CONTAINER_NAME=}-data"
 REDIS_VERSION="3.0.7"
 
