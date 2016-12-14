@@ -1,0 +1,3 @@
+#!/bin/sh
+echo $PWD
+exec ./test_end2end.sh
