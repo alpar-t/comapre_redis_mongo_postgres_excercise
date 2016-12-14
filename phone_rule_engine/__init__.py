@@ -11,7 +11,7 @@ LUA_SCRIPT_NAME = "phone.redis.lua"
 class RuleOperations(object):
     """ Operations to deal with phone prefix rules """
 
-    def __init__(self, redis, key_prefix=None):
+    def __init__(self, redis, key_prefix=""):
         self.redis = redis
         self.key_prefix = key_prefix
         if self.key_prefix:
