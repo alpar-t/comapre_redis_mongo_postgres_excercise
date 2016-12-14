@@ -32,14 +32,6 @@ Could use a `rules` table such as:
         PRIMARY KEY (orgId, prefix)
     );
 
-    +-----------+---------------------------+------+-----+---------+-------+
-    | Field     | Type                      | Null | Key | Default | Extra |
-    +-----------+---------------------------+------+-----+---------+-------+
-    | prefix    | varchar(15)               | NO   | PRI | NULL    |       |
-    | type      | enum('allow','restrict')  | NO   |     | NULL    |       |
-    | trialOnly | tinyint(1)                | NO   |     | NULL    |       |
-    +-----------+---------------------------+------+-----+---------+-------+
-
 The prefix can be part of the primary key, because it doesn't make sense to both restrict 
 and allow the same prefix.
 
