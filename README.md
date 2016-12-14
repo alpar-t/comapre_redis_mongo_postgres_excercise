@@ -1,3 +1,10 @@
+Building and developing
+=======================
+
+Make sure all requirements are available:
+
+    ./check_env.sh
+
 
 On Choosing a database
 ======================
