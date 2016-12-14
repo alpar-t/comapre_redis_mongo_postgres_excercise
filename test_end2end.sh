@@ -4,7 +4,17 @@ set -e
 
 cd "$(dirname "$(realpath "$0")")";
 
-./test_all.sh
+echo "Checking environment"
+./env_check.sh 
+
+echo "Ruinning unit tests"
+./phone_rule_engine/test.sh
+
+echo "Runing Redis integration tests"
+./redis_test_integration/test.sh
+
+echo "Importing rules to redis"
+phone_rule_engine/venv/bin/python3 import_legacy.py --port=`docker port rules-redis-test 6379 | cut -d: -f2`
 
 URL_BASE='http://127.0.0.1:5000/phone_call'
 
@@ -30,9 +40,6 @@ check() {
         echo -e  "\e[92m$ret \e[37m"
     fi
 }
-
-echo "Importing rules to redis"
-phone_rule_engine/venv/bin/python3 import_legacy.py --port=`docker port rules-redis-test 6379 | cut -d: -f2`
 
 echo
 echo "+--------------------------+"
