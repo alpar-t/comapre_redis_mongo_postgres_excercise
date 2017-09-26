@@ -173,7 +173,7 @@ On Using PostgreSQL
 
 Unlike MySQL, there is [a hash index](https://www.postgresql.org/docs/9.1/static/indexes-types.html), 
 but it suffers from reliability issues, and while the time complexity is not documented
-(older versions of the manual)[https://www.postgresql.org/docs/8.3/static/indexes-types.html]
+[older versions of the manual](https://www.postgresql.org/docs/8.3/static/indexes-types.html)
 state that performance is not better than B-TREE.
 
 It is unlikely that PostgreSQL can be any better than MySQL in this case.
@@ -267,7 +267,7 @@ that better reflect intent rather than some more compact variant.
 - The rule engine would need to be implemented by the app, but each rule lookup would
   be of O(1) complexity. 
     - Redis documents the time complexity in a straight forward way.
-- a LUA script that runs on Redis can save on latency and bandwidth
+- a [LUA script](phone_rule_engine/phone.redis.lua) that runs on Redis can save on latency and bandwidth
     - granted at the expense of making use of a new programming language in the mix
 - the data model is compact, straight forward, and reassembles the python implementation,
   making it especially easy to understand for anyone who understood the previous implementation
