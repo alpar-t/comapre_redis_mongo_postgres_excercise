@@ -1,3 +1,37 @@
+About
+=====
+
+This is a sample project to learn about databases and how traditional relational databases compare
+to noSQL and when to sue which, but also a learning exercise as this is my first exposure to Mongo, 
+Redis and Lua. 
+
+The problem
+===========
+
+Users can make/receive unlimited phone calls to any phone number in the world, for one monthly price. 
+This is mostly true, except that some areas are so absurdly expensive that we have to block calling 
+to very remote places and exceptionally expensive number prefixes. 
+Free trial users also get access to unlimited international calling, except we restrict it a bit further 
+to avoid high costs and abuse.
+
+So far the above logic has been enforced through hardcoded data in a file we call `phone.py`.
+
+We'd like to improve this in the following ways:
+
+- Move all of the prefix data into a database so we don't have to deploy code changes on every tweak.
+- We'd like the ability to block an overall country code (blacklist prefix) but whitelist a specific phone number or prefix within that country code.
+- The prefix data from `phone.py` data should be the default, however we'd like the ability to change the whitelist _or_ blacklist data for a specific organization. 
+    - For example, we typically want to blacklist calling to the Bahamas for trial users/organizations, but for a specific large potential customer we want to relax/disable this restriction for them. 
+    - Note that 98% of organizations will not have any special rules applied, however.
+
+Requirements:
+
+- Write a Python (2 or 3) app that we can easily plug in to our main Flask app to replace `is_restricted_number`. 
+- Provide a script we can run one-time to populate the database from `phone.py` data.
+- It should be well unit tested so we can tell the whitelist/blacklist/per-organization/trial overrides work well.
+- The prefix data should be stored persistently in a data store.
+- **Make it as fast as you can** since this operation is in the middle of a flow that a user performs hundreds of times per day.
+
 Developing
 ==========
 
